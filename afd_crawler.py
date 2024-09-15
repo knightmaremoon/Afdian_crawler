@@ -264,7 +264,6 @@ class GeekCrawler:
                 dir_name='9adgq',
                 filename=title,
                 content=content,
-                file_type=file_type
             )
 
     def _get_post_content(self, post_id, album_id):
@@ -314,19 +313,16 @@ class GeekCrawler:
         return result
 
     @staticmethod
-    def save_to_file(dir_name, filename, content=None, file_type=None):
+    def save_to_file(dir_name, filename, content=None):
         """
         将结果保存成文件的方法，保存在当前目录下
         Args:
             dir_name: 文件夹名称，如果不存在该文件夹则会创建文件夹
             filename: 文件名称，直接新建
-
-            audio: 需要填入文件中的音频文件（一般为音频地址）
-            file_type: 文档类型（需要保存什么类型的文档），默认保存为 Markdown 文档
+            content: 需要保存的文字内容
         Returns:
         """
-        if not file_type:
-            file_type = '.md'
+        file_type = '.md'
         dir_path = pathlib.PurePosixPath() / dir_name
         if not os.path.isdir(dir_path):
             os.mkdir(dir_path)
@@ -357,14 +353,9 @@ def run(cellphone=None, passwd=None):
 
 
 if __name__ == "__main__":
-    # 采用在脚本中写死账号密码的方式
+    # 如果不在这里写死，也可以手动在控制台输入
     cellphone = ""
     passwd = ""
-
-    # 采用每次跑脚本手动输入账号密码的方式
-    # cellphone = str(input("请输入你的账号（手机号）: "))
-    # passwd = str(input("请输入你的密码: "))
-
 
     # 保存文件的后缀名
     file_type = '.md'
@@ -378,3 +369,5 @@ if __name__ == "__main__":
         log.error(f"请求过程中出错了，出错信息为：{traceback.format_exc()}")
     finally:
         _save_finish_article_id_to_file()
+
+
