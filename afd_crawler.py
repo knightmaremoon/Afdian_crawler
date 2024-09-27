@@ -223,7 +223,7 @@ class GeekCrawler:
 
     def _product(self):
         """ 获得指定album下所有节目的方法 """
-        album_id = '831821ee3b1911efbe3c52540025c377'
+        album_id = 'c2624006a35111eeaebb52540025c377'
         log.info("请求获取目录接口：" + self.cookie.cookie_string)
         url = f"https://afdian.com/api/user/get-album-catalog?album_id={album_id}"
         method = "GET"
@@ -350,54 +350,65 @@ def run(cellphone=None, passwd=None):
     _save_finish_article_id_to_file()
     log.info("正常抓取完成。")
 
-def fetch_all_albums(user_id):
+def fetch_all_albums(user_id): # 暂时无法捕捉到完整的album_id,只能进行手动输入
     url = f"https://afdian.com/api/post/get-list?user_id={user_id}&type=old&publish_sn=&per_page=10&group_id=&all=1&is_public=&plan_id=&title=&name="
-
-    # 发起 GET 请求
-    response = requests.get(url)
-    if response.status_code != 200:
-        log.error(f"API 请求失败，状态码：{response.status_code}")
-        return []
-
-    data = response.json().get('data', {}).get('list', [])
-
-    if not data:
-        log.info("获取albums信息失败。")
-        return []
-
+    page = 1
+    max_pages = 10
     album_ids = set()  # 用 set 来存储 album_id 去重
+    has_more = True
 
-    # 遍历data中的内容，提取 album_id
-    for i in data:
-        albums = i.get('albums', [])
+    while has_more and page <= max_pages:
+        # 发起 GET 请求
+        response = requests.get(url + f"&page={page}")  # 添加分页参数
+        if response.status_code != 200:
+            log.error(f"API 请求失败，状态码：{response.status_code}")
+            return []
 
-        for album in albums:
-            album_id = album.get('album_id')
-            if album_id:
-                album_ids.add(album_id)  # 将 album_id 加入 set 中去重
+        data = response.json().get('data', {})
+        log.info(f"当前页 {page} 返回的内容: {data}")
+
+        posts = data.get('list', [])
+
+        if not posts:
+            log.info("没有更多数据，停止抓取。")
+            break
+
+        # 遍历data中的内容，提取 album_id
+        for post in posts:
+            albums = post.get('albums', [])
+            for album in albums:
+                album_id = album.get('album_id')
+                if album_id:
+                    album_ids.add(album_id)  # 将 album_id 加入 set 中去重
+
+        # 检查是否还有更多数据
+        has_more = data.get('has_more', 0) == 1
+        page += 1  # 下一页
 
     log.info(f"共获取到 {len(album_ids)} 个 album_id")
     return list(album_ids)
 
 if __name__ == "__main__":
-    # 如果不在这里写死，也可以手动在控制台输入
-    cellphone = ""
-    passwd = ""
+    # 采用在代码中写死的方法
+    cellphone = ""  # your cellphone
+    passwd = ""  # your password
 
     # 保存文件的后缀名
     file_type = '.md'
+    target_user_id = '3f49234e3e8f11eb8f6152540025c377'  # 浏览器用f12获取
 
-    # try:
-    #     FINISH_ARTICLES = _load_finish_article()
-    #     run(cellphone, passwd)
-    # except Exception:
-    #     import traceback
-    #
-    #     log.error(f"请求过程中出错了，出错信息为：{traceback.format_exc()}")
-    # finally:
-    #     _save_finish_article_id_to_file()
 
-    # 调用函数并打印结果
-    album_ids_list = fetch_all_albums()
-    print("获取到的 album_ids:", album_ids_list)
+    try:
+        FINISH_ARTICLES = _load_finish_article()
+        run(cellphone, passwd)
+    except Exception:
+        import traceback
+
+        log.error(f"请求过程中出错了，出错信息为：{traceback.format_exc()}")
+    finally:
+        _save_finish_article_id_to_file()
+
+    # 测试fetch_all_albums函数
+    # album_ids_list = fetch_all_albums(target_user_id)
+    # print("获取到的 album_ids:", album_ids_list)
 
